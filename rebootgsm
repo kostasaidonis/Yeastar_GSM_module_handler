@@ -1,0 +1,44 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          rebootgsm
+# Required-Start:    $network
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Run GSM Reboot Script Every Minute
+### END INIT INFO
+
+SCRIPT_PATH="/persistent/kostas/rebootgsm.sh"
+LOG_FILE="/var/log/rebootgsm.log"
+
+case "$1" in
+start)
+    echo "Starting GSM Reboot Service..."
+    # Start an infinite loop to run the script every minute
+    (
+		echo "Running GSM Reboot Script at $(date)" >> "$LOG_FILE"
+        while true; do
+            /bin/sh "$SCRIPT_PATH" 1>/dev/null 2>>"$LOG_FILE"
+            sleep 60  # Wait for 1 minute
+        done
+    ) &
+    echo $! > /var/run/rebootgsm.pid
+    ;;
+stop)
+    echo "Stopping GSM Reboot Service..."
+    if [ -f /var/run/rebootgsm.pid ]; then
+        kill "$(cat /var/run/rebootgsm.pid)" 2>/dev/null
+        rm -f /var/run/rebootgsm.pid
+    fi
+    ;;
+restart)
+    $0 stop
+    $0 start
+    ;;
+*)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
